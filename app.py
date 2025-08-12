@@ -125,9 +125,8 @@ def api_start_analysis():
     ativo = random.choice(ativos)
     direcao = random.choice(direcoes)
 
-    # pega UTC "naive" agora e converte para SP
-    now_dt_utc = datetime.utcnow().replace(second=0, microsecond=0)
-    now_dt_sp = pytz.utc.localize(now_dt_utc).astimezone(tz_sp)
+    # USANDO datetime.now com timezone America/Sao_Paulo para pegar horário correto
+    now_dt_sp = datetime.now(tz_sp).replace(second=0, microsecond=0)
 
     entrada_dt = (now_dt_sp + timedelta(minutes=3)).strftime("%H:%M")
     protec1 = (now_dt_sp + timedelta(minutes=4)).strftime("%H:%M")
@@ -199,4 +198,184 @@ def admin():
 def api_admin_users():
     user = current_user()
     if not user or not user.is_admin:
-        return jsonify({
+        return jsonify({"error": "unauthorized"}), 403
+
+    if request.method == "GET":
+        users = User.query.order_by(User.id.desc()).all()
+        out = []
+        for u in users:
+            out.append({
+                "id": u.id,
+                "email": u.email,
+                "username": u.username,
+                "is_admin": bool(u.is_admin),
+                "access_expires_at": to_ms(u.access_expires_at),
+                "created_at": to_ms(u.created_at),
+                "last_analysis_started_at": session.get("analysis_started_at_ms") if u.id == user.id else None
+            })
+        return jsonify({"users": out})
+
+    # POST -> create user
+    data = request.get_json() or {}
+    email = data.get("email")
+    username = data.get("username")
+    password = data.get("password")
+    is_admin_flag = bool(data.get("is_admin"))
+    access_expires_ms = data.get("access_expires_at")
+
+    if not (email and username and password):
+        return jsonify({"error": "missing_fields"}), 400
+    if User.query.filter((User.email == email) | (User.username == username)).first():
+        return jsonify({"error": "exists"}), 400
+
+    access_expires_at = None
+    if access_expires_ms:
+        access_expires_at = datetime.utcfromtimestamp(access_expires_ms / 1000.0)
+
+    hashed = generate_password_hash(password)
+    u = User(email=email, username=username, password=hashed, is_admin=is_admin_flag, access_expires_at=access_expires_at)
+    db.session.add(u)
+    db.session.commit()
+    return jsonify({"ok": True, "id": u.id})
+
+
+@app.route("/api/admin/users/<int:user_id>", methods=["PUT", "DELETE"])
+def api_admin_user_modify(user_id):
+    user = current_user()
+    if not user or not user.is_admin:
+        return jsonify({"error": "unauthorized"}), 403
+    target = User.query.get(user_id)
+    if not target:
+        return jsonify({"error": "not_found"}), 404
+    if request.method == "DELETE":
+        db.session.delete(target)
+        db.session.commit()
+        return jsonify({"ok": True})
+    data = request.get_json() or {}
+    if data.get("email"):
+        target.email = data.get("email")
+    if data.get("username"):
+        target.username = data.get("username")
+    if "is_admin" in data:
+        target.is_admin = bool(data.get("is_admin"))
+    if "access_expires_at" in data:
+        if data.get("access_expires_at") is None:
+            target.access_expires_at = None
+        else:
+            target.access_expires_at = datetime.utcfromtimestamp(int(data.get("access_expires_at")) / 1000.0)
+    if data.get("password"):
+        target.password = generate_password_hash(data.get("password"))
+    db.session.add(target)
+    db.session.commit()
+    return jsonify({"ok": True})
+
+
+# Admin clicks list & stats
+@app.route("/api/admin/clicks/list")
+def api_admin_clicks_list():
+    user = current_user()
+    if not user or not user.is_admin:
+        return jsonify({"error": "unauthorized"}), 403
+    logs = ClickLog.query.order_by(ClickLog.clicked_at.desc()).limit(1000).all()
+    out = []
+    for l in logs:
+        out.append({
+            "id": l.id,
+            "user_id": l.user_id,
+            "username": l.user.username if l.user else None,
+            "button_name": l.button_name,
+            "clicked_at": to_ms(l.clicked_at)
+        })
+    return jsonify({"logs": out})
+
+
+@app.route("/api/admin/clicks/stats")
+def api_admin_clicks_stats():
+    user = current_user()
+    if not user or not user.is_admin:
+        return jsonify({"error": "unauthorized"}), 403
+    period = request.args.get("period", "daily")
+    now = datetime.utcnow()
+
+    labels = []
+    telegram_counts = {}
+    compra_counts = {}
+
+    if period == "daily":
+        days = 30
+        start = (now - timedelta(days=days)).date()
+        for i in range(days + 1):
+            d = start + timedelta(days=i)
+            label = d.strftime("%Y-%m-%d")
+            labels.append(label)
+            telegram_counts[label] = 0
+            compra_counts[label] = 0
+        logs = ClickLog.query.filter(ClickLog.clicked_at >= datetime.combine(start, datetime.min.time())).all()
+        for l in logs:
+            key = l.clicked_at.date().strftime("%Y-%m-%d")
+            if l.button_name == "telegram":
+                telegram_counts[key] += 1
+            else:
+                compra_counts[key] += 1
+
+    elif period == "weekly":
+        weeks = 12
+        start_date = (now - timedelta(weeks=weeks)).date()
+        def week_label(dt):
+            y, w, _ = dt.isocalendar()
+            return f"{y}-W{w:02d}"
+        for i in range(weeks + 1):
+            dt = start_date + timedelta(weeks=i)
+            label = week_label(dt)
+            labels.append(label)
+            telegram_counts[label] = 0
+            compra_counts[label] = 0
+        logs = ClickLog.query.filter(ClickLog.clicked_at >= datetime.combine(start_date, datetime.min.time())).all()
+        for l in logs:
+            key = week_label(l.clicked_at.date())
+            if l.button_name == "telegram":
+                telegram_counts[key] += 1
+            else:
+                compra_counts[key] += 1
+
+    else:
+        months = 12
+        # calculate start month (approx)
+        start_month = (now.replace(day=1) - timedelta(days=30 * months)).date()
+        def month_label(dt):
+            return dt.strftime("%Y-%m")
+        cur = start_month
+        for i in range(months + 1):
+            label = month_label(cur)
+            labels.append(label)
+            telegram_counts[label] = 0
+            compra_counts[label] = 0
+            # advance month safely
+            year = cur.year + (cur.month // 12)
+            month = (cur.month % 12) + 1
+            try:
+                cur = cur.replace(year=year, month=month, day=1)
+            except Exception:
+                cur = (cur + timedelta(days=31)).replace(day=1)
+        logs = ClickLog.query.filter(ClickLog.clicked_at >= datetime.combine(start_month, datetime.min.time())).all()
+        for l in logs:
+            key = month_label(l.clicked_at)
+            if l.button_name == "telegram":
+                telegram_counts[key] += 1
+            else:
+                compra_counts[key] += 1
+
+    telegram_arr = [telegram_counts.get(lbl, 0) for lbl in labels]
+    compra_arr = [compra_counts.get(lbl, 0) for lbl in labels]
+    total_arr = [telegram_arr[i] + compra_arr[i] for i in range(len(labels))]
+
+    return jsonify({
+        "labels": labels,
+        "telegram": telegram_arr,
+        "compra": compra_arr,
+        "total": total_arr
+    })
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
