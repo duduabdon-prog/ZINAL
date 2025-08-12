@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <title>Login - ZINAL</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <header class="header">
+    <div style="display:flex;align-items:center;gap:12px">
+      <img src="{{ url_for('static', filename='images/logo.png') }}" alt="ZINAL" class="logo">
+      <div style="color:var(--text);font-weight:700;font-size:18px">ZINAL</div>
+    </div>
+    <div></div>
+  </header>
+
+  <main style="display:flex;align-items:center;justify-content:center;height:calc(100vh - 70px);">
+    <div class="login-box" style="background:var(--card);padding:28px;border-radius:10px;">
+      <div class="login-title">ZINAL</div>
+      <img src="{{ url_for('static', filename='images/logo.png') }}" alt="logo" style="height:72px;display:block;margin:8px auto 16px;">
+      <h2 style="text-align:center;color:var(--text);margin-top:0">ACESSAR A PLATAFORMA</h2>
+
+      {% if error %}
+        <p style="color: #ff6b6b; text-align:center;">{{ error }}</p>
+      {% endif %}
+
+      <form method="POST" style="display:flex;flex-direction:column;gap:10px;">
+        <input type="text" name="identifier" placeholder="Usuário ou Email" required style="padding:10px;border-radius:6px;border:none;background:#111;color:var(--text);">
+        <input type="password" name="password" placeholder="Senha" required style="padding:10px;border-radius:6px;border:none;background:#111;color:var(--text);">
+        <button type="submit" class="btn btn--primary" style="margin-top:6px;">Entrar</button>
+      </form>
+
+      <p style="color:var(--muted);font-size:13px;margin-top:10px;text-align:center;">
+        Não tem acesso? <a href="/comprar" class="small-link">Obtenha seu acesso a ZINAL</a>
+      </p>
+    </div>
+  </main>
+</body>
+</html>

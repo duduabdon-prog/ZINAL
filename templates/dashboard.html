@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Painel de Operação - ZINAL</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial"></script>
+</head>
+<body>
+  <header class="header">
+    <div style="display:flex;align-items:center;gap:12px">
+      <img src="{{ url_for('static', filename='images/logo.png') }}" alt="ZINAL" class="logo">
+      <div style="color:var(--text);font-weight:700;font-size:18px">ZINAL</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="color:var(--muted);margin-right:12px">{{ username }}</div>
+      <button id="logoutBtn" onclick="window.location.href='{{ url_for('logout') }}'">Sair</button>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <aside class="side-panel">
+      <div style="margin-top:12px;">
+        <button class="btn" onclick="registrarClique('telegram','https://t.me/eduardoOreiDoOB')">📢 Entrar no Telegram</button>
+        <button class="btn" onclick="registrarClique('compra','https://www.sua-plataforma.com/adquirir')">💳 Adquirir Plataforma</button>
+      </div>
+    </aside>
+
+    <section class="analysis-area">
+      <div id="chartContainer" style="width:100%;max-width:1100px">
+        <canvas id="candlestickChart"></canvas>
+      </div>
+
+      <div id="analysisBox" class="analysis-box" style="display:none; width:100%;max-width:1100px;">
+        <div id="analysisContent" class="analysis-content"></div>
+      </div>
+
+      <div style="margin-top:14px;text-align:center;width:100%">
+        <div id="status-msg" aria-live="polite">Clique no botão para iniciar a análise</div>
+        <div style="margin-top:10px;">
+          <button id="startAnalysisBtn" class="btn btn--start" onclick="startAnalysis()">INICIAR ANÁLISE</button>
+        </div>
+        <div id="analysisCountdown" style="margin-top:8px;color:var(--muted)"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>

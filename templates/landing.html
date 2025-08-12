@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>ZINAL - Início</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <header class="header">
+    <div style="display:flex;align-items:center;gap:12px">
+      <img src="{{ url_for('static', filename='images/logo.png') }}" class="logo" alt="ZINAL">
+      <div style="font-weight:700;color:var(--text);font-size:18px">ZINAL</div>
+    </div>
+    <div>
+      <a href="{{ url_for('login') }}" class="btn btn--primary">ACESSAR A PLATAFORMA</a>
+    </div>
+  </header>
+
+  <main style="display:flex;align-items:center;justify-content:center;height:calc(100vh - 70px);">
+    <div style="text-align:center;color:var(--text);max-width:900px;padding:20px;">
+      <h1 style="font-size:40px;color:var(--logo-yellow);text-shadow:0 0 10px rgba(255,212,0,0.12)">ZINAL</h1>
+      <p style="color:var(--muted);font-size:18px">A I.A que analisa por você — análises rápidas e automatizadas para OTC e Ações.</p>
+      <div style="margin-top:18px;">
+        <a href="{{ url_for('login') }}" class="btn btn--primary">ACESSAR A PLATAFORMA</a>
+        <a href="/comprar" class="small-link" style="margin-left:12px;color:var(--muted)">Obtenha seu acesso a ZINAL</a>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

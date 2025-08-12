@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - ZINAL</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Chart.js for admin stats -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header class="header">
+        <div style="display:flex;align-items:center;gap:12px">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="ZINAL" class="logo">
+            <div style="color:var(--text);font-weight:700;font-size:18px">ZINAL</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+            <div style="color:var(--muted);margin-right:12px">{{ username }}</div>
+            <button onclick="window.location.href='{{ url_for('logout') }}'">Sair</button>
+        </div>
+    </header>
+
+    <main style="padding:18px;">
+        <h2>Painel Administrativo</h2>
+
+        <div style="display:flex;gap:18px;">
+            <div style="flex:1;min-width:320px;">
+                <h3>Criar Usuário</h3>
+                <form id="createUserForm">
+                    <input name="email" placeholder="Email" required style="width:100%;padding:8px;margin-bottom:6px"><br>
+                    <input name="username" placeholder="Nome de usuário" required style="width:100%;padding:8px;margin-bottom:6px"><br>
+                    <input name="password" placeholder="Senha" required type="password" style="width:100%;padding:8px;margin-bottom:6px"><br>
+                    <label><input type="checkbox" name="is_admin"> Administrador</label><br>
+                    <label><input type="checkbox" id="vitalicio" name="vitalicio" onchange="toggleExp()"> Acesso vitalício</label><br>
+                    <input id="access_expires_at" name="access_expires_at" type="datetime-local" style="width:100%;padding:8px;margin-top:6px"><br>
+                    <button type="submit" class="btn btn--primary" style="margin-top:8px">Criar Usuário</button>
+                    <div id="createUserMsg" style="margin-top:6px;color:green"></div>
+                </form>
+            </div>
+
+            <div style="flex:2;min-width:420px;">
+                <h3>Usuários cadastrados</h3>
+                <div style="overflow:auto;max-height:320px;">
+                    <table id="usersTable" style="width:100%;border-collapse:collapse;color:var(--text)">
+                        <thead>
+                            <tr><th>ID</th><th>Email</th><th>Usuário</th><th>Admin</th><th>Expira</th><th>Última Análise</th><th>Ações</th></tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <hr style="margin:18px 0">
+
+        <h3>Cliques (logs)</h3>
+        <div style="display:flex;gap:18px;">
+            <div style="flex:1;">
+                <table id="clicksTable" style="width:100%;border-collapse:collapse;">
+                    <thead><tr><th>ID</th><th>Usuário</th><th>Botão</th><th>Quando</th></tr></thead>
+                    <tbody style="color:var(--text)"></tbody>
+                </table>
+            </div>
+            <div style="flex:1;">
+                <h4>Estatísticas</h4>
+                <label for="periodSelect">Período:</label>
+                <select id="periodSelect">
+                    <option value="daily">Diário (últimos 30 dias)</option>
+                    <option value="weekly">Semanal (últimas 12 semanas)</option>
+                    <option value="monthly">Mensal (últimos 12 meses)</option>
+                </select>
+                <canvas id="clicksChart" style="max-width:100%;height:300px"></canvas>
+            </div>
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+</body>
+</html>

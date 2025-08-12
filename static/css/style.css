@@ -1,0 +1,122 @@
+:root{
+  --bg: #000;
+  --logo-yellow: #FFD400;
+  --muted: #9AA0A6;
+  --text: #E6E6E6;
+  --green: #00FF90;
+  --red: #FF4E4E;
+  --card: rgba(20,20,20,0.7);
+  --start-green: #6CFFB0;
+}
+
+*{box-sizing:border-box}
+
+body {
+    margin: 0;
+    font-family: Inter, Poppins, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+}
+
+/* header */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: rgba(0,0,0,0.6);
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.header .logo { height: 44px; }
+
+/* layout */
+.main-content {
+    display:flex;
+    gap:20px;
+    padding:18px;
+    height: calc(100vh - 70px);
+    align-items:flex-start;
+}
+
+/* side panel */
+.side-panel {
+    width: 260px;
+    background: var(--card);
+    padding: 18px;
+    border-radius: 10px;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+/* analysis area */
+.analysis-area {
+    flex: 1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+}
+
+/* chart */
+#chartContainer { background:#0b0b0b; padding:12px; border-radius:10px; border:1px solid rgba(255,255,255,0.03); width:100%; }
+canvas { width:100% !important; height: 60vh !important; }
+
+/* analysis box */
+.analysis-box {
+    background: linear-gradient(180deg, rgba(0,0,0,0.8), rgba(6,6,6,0.9));
+    border-radius: 10px;
+    padding: 18px;
+    color: var(--text);
+    border: 1px solid rgba(255,255,255,0.03);
+    margin-top: 8px;
+}
+
+/* analysis text layout (mimic your model) */
+.analysis-content { font-size: 16px; line-height: 1.6; text-align:left; color:var(--text); max-width:100%; }
+
+/* start button style (green light, white text, larger font) */
+.btn--start {
+    background: var(--start-green);
+    color: white;
+    font-weight: 800;
+    font-size: 18px;
+    padding: 12px 28px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(108,255,176,0.12);
+}
+
+.btn--start[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* generic button */
+.btn { padding:8px 10px; border-radius:6px; background:transparent; color:var(--text); border:1px solid rgba(255,255,255,0.06); cursor:pointer; }
+
+.btn--primary { background: var(--logo-yellow); color:#000; padding:8px 12px; border-radius:8px; text-decoration:none; }
+
+/* small responsive */
+@media (max-width:900px){
+  .main-content{ flex-direction:column; height:auto; padding:12px; }
+  .side-panel{ width:100%; order:2; }
+  .analysis-area{ order:1; width:100%; }
+  canvas{ height:360px !important; }
+}
+
+/* table form */
+table { width:100%; border-collapse:collapse; }
+table th, table td { padding:8px; border:1px solid rgba(255,255,255,0.04); text-align:left; }
+input[type="text"], input[type="email"], input[type="password"], input[type="datetime-local"], select {
+    padding:8px; border-radius:6px; border:1px solid rgba(255,255,255,0.06); background:#111; color:var(--text);
+}
+
+/* ----- LOGIN TITLE (ACRESCENTADO) ----- */
+.login-title {
+    font-size: 42px;
+    color: var(--logo-yellow);
+    font-weight: 900;
+    text-align: center;
+    margin-bottom: 6px;
+    text-shadow: 0 4px 18px rgba(255,212,0,0.08);
+}
