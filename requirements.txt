@@ -1,9 +1,4 @@
-Django
-gunicorn
-psycopg2-binary
-dj-database-url
-python-decouple
-whitenoise
 Flask
-SQLAlchemy
+Werkzeug
 python-dotenv
+Flask-SQLAlchemy
