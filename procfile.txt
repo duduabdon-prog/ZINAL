@@ -1,1 +1,1 @@
-web: gunicorn ZINAL.wsgi
+web: gunicorn app:app
