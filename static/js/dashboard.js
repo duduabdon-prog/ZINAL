@@ -7,7 +7,7 @@ let candleData = [];
 
 // helpers
 function pad(n){ return n.toString().padStart(2,'0'); }
-function formatTimeFromMs(ms){ const d = new Date(ms); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+function formatTimeFromMs(ms){ const d = new Date(ms); return `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`; }
 
 function gerarCandle(base) {
     const open = +(base + (Math.random() - 0.5) * 0.6).toFixed(2);
