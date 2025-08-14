@@ -21,7 +21,7 @@
 
   <main class="main-content">
     <aside class="side-panel">
-      <div style="margin-top:12px;">
+      <div style="margin-top:15px;">
         <button class="btn" onclick="registrarClique('telegram','https://t.me/eduardoOreiDoOB')">📢 Entrar no Telegram</button>
         <button class="btn" onclick="registrarClique('compra','https://zinal.my.canva.site/')">💳 Adquirir Plataforma</button>
       </div>
@@ -38,7 +38,7 @@
 
       <div style="margin-top:14px;text-align:center;width:100%">
         <div id="status-msg" aria-live="polite">Clique no botão para iniciar a análise</div>
-        <div style="margin-top:10px;">
+        <div style="margin-top:20px;">
           <button id="startAnalysisBtn" class="btn btn--start" onclick="startAnalysis()">INICIAR ANÁLISE</button>
         </div>
         <div id="analysisCountdown" style="margin-top:8px;color:var(--muted)"></div>
@@ -49,3 +49,4 @@
   <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 </body>
 </html>
+
