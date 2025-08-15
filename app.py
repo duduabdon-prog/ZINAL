@@ -211,7 +211,9 @@ def api_admin_users():
                 "is_admin": bool(u.is_admin),
                 "access_expires_at": to_ms(u.access_expires_at),
                 "created_at": to_ms(u.created_at),
-                "last_analysis_started_at": session.get("analysis_started_at_ms") if u.id == user.id else None
+                "last_analysis_started_at": session.get("analysis_started_at_ms") if u.id == user.id else None,
+                # >>> ADIÇÃO: status de expiração para o painel
+                "is_expired": (not u.is_access_valid())
             })
         return jsonify({"users": out})
 
@@ -265,6 +267,37 @@ def api_admin_user_modify(user_id):
             target.access_expires_at = datetime.utcfromtimestamp(int(data.get("access_expires_at")) / 1000.0)
     if data.get("password"):
         target.password = generate_password_hash(data.get("password"))
+    db.session.add(target)
+    db.session.commit()
+    return jsonify({"ok": True})
+
+
+# >>> ADIÇÃO: endpoint específico para RENOVAR rapidamente a data de expiração
+@app.route("/api/admin/users/<int:user_id>/renew", methods=["POST"])
+def api_admin_user_renew(user_id):
+    admin = current_user()
+    if not admin or not admin.is_admin:
+        return jsonify({"error": "unauthorized"}), 403
+
+    target = User.query.get(user_id)
+    if not target:
+        return jsonify({"error": "not_found"}), 404
+
+    data = request.get_json() or {}
+    # Espera { "access_expires_at": <epoch_ms> } ou null (vitalício)
+    if "access_expires_at" not in data:
+        return jsonify({"error": "missing_access_expires_at"}), 400
+
+    if data["access_expires_at"] is None:
+        # tornar vitalício
+        target.access_expires_at = None
+    else:
+        try:
+            ms = int(data["access_expires_at"])
+            target.access_expires_at = datetime.utcfromtimestamp(ms / 1000.0)
+        except Exception:
+            return jsonify({"error": "invalid_timestamp"}), 400
+
     db.session.add(target)
     db.session.commit()
     return jsonify({"ok": True})
