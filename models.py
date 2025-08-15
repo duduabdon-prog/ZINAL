@@ -12,14 +12,36 @@ class User(db.Model):
     password = db.Column(db.String(255), nullable=False)  # hash da senha
     is_admin = db.Column(db.Boolean, default=False)
     access_expires_at = db.Column(db.DateTime, nullable=True)  # None = vitalício
+
+    # >>> ADIÇÃO: campo para marcar que o acesso está expirado (não remove a conta)
+    is_expired = db.Column(db.Boolean, default=False)
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     clicks = db.relationship("ClickLog", backref="user", lazy=True)
 
     def is_access_valid(self):
-        """Retorna True se o acesso ainda está válido."""
+        """Retorna True se o acesso ainda está válido (vitalício ou data no futuro)."""
         return self.access_expires_at is None or self.access_expires_at > datetime.utcnow()
+
+    def update_expiration_status(self):
+        """
+        Atualiza o campo `is_expired` de acordo com access_expires_at.
+        Deve ser chamado antes de exibir/usar o usuário no admin para refletir o estado atual.
+        Retorna o novo valor de is_expired (True/False).
+        """
+        self.is_expired = not self.is_access_valid()
+        return self.is_expired
+
+    def renew_access(self, new_access_dt):
+        """
+        Renova o acesso do usuário.
+        - new_access_dt pode ser um datetime (UTC) ou None para tornar vitalício.
+        - Ao renovar, is_expired é setado para False.
+        """
+        self.access_expires_at = new_access_dt
+        self.is_expired = False
 
     def __repr__(self):
         return f"<User {self.username}>"
