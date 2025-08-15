@@ -6,12 +6,30 @@ async function fetchUsers(){
     const tbody = document.querySelector('#usersTable tbody');
     tbody.innerHTML = '';
     payload.users.forEach(u => {
-        const exp = u.access_expires_at ? new Date(u.access_expires_at).toLocaleString() : 'Vitalício';
+        let exp;
+        if (u.access_expires_at) {
+            const expDate = new Date(u.access_expires_at);
+            if (Date.now() > expDate.getTime()) {
+                exp = `<span style="color:red;font-weight:bold;">Expirado</span>`;
+            } else {
+                exp = expDate.toLocaleString();
+            }
+        } else {
+            exp = 'Vitalício';
+        }
+
         const last = u.last_analysis_started_at ? new Date(u.last_analysis_started_at).toLocaleString() : '-';
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${u.id}</td><td>${u.email}</td><td>${u.username}</td><td>${u.is_admin ? 'Sim' : 'Não'}</td><td>${exp}</td><td>${last}</td>
+        tr.innerHTML = `
+            <td>${u.id}</td>
+            <td>${u.email}</td>
+            <td>${u.username}</td>
+            <td>${u.is_admin ? 'Sim' : 'Não'}</td>
+            <td>${exp}</td>
+            <td>${last}</td>
             <td>
               <button onclick="editUser(${u.id})">Editar</button>
+              <button onclick="renewAccess(${u.id})">Renovar</button>
               <button onclick="deleteUser(${u.id})">Excluir</button>
             </td>`;
         tbody.appendChild(tr);
@@ -56,7 +74,7 @@ async function drawStats(period='daily'){
     });
 }
 
-// create user via AJAX
+// criar usuário
 document.getElementById('createUserForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const form = e.target;
@@ -123,6 +141,28 @@ async function editUser(id){
     });
     if(res.ok) fetchUsers();
     else alert('Erro ao editar');
+}
+
+// nova função para renovar acesso
+async function renewAccess(id){
+    const novaData = prompt('Digite a nova data de expiração (YYYY-MM-DD HH:MM):');
+    if(!novaData) return;
+    const timestamp = new Date(novaData).getTime();
+    if(isNaN(timestamp)) {
+        alert('Data inválida!');
+        return;
+    }
+    const res = await fetch(`/api/admin/users/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ access_expires_at: timestamp })
+    });
+    if(res.ok) {
+        alert('Acesso renovado!');
+        fetchUsers();
+    } else {
+        alert('Erro ao renovar acesso');
+    }
 }
 
 document.getElementById('periodSelect').addEventListener('change', (e) => {
