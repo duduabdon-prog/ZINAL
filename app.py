@@ -69,11 +69,18 @@ def login():
             if not user.is_access_valid():
                 error = "Acesso expirado."
                 return render_template("login.html", error=error)
-            session["user_id"] = user.id
+
             # >>> CORREÇÃO: força is_admin como True/False
+            session["user_id"] = user.id
             is_admin_flag = True if user.is_admin in (1, True) else False
             session["is_admin"] = is_admin_flag
-            return redirect(url_for("admin") if is_admin_flag else url_for("dashboard"))
+
+            # Redireciona para admin ou dashboard dependendo do is_admin
+            if is_admin_flag:
+                return redirect(url_for("admin"))
+            else:
+                return redirect(url_for("dashboard"))
+
         error = "Credenciais inválidas!"
     return render_template("login.html", error=error)
 
