@@ -42,9 +42,7 @@ def to_ms(dt):
     """Converte datetime para epoch ms de forma correta assumindo UTC se for 'naive'."""
     if dt is None:
         return None
-    # Se tzinfo for None, tratamos como UTC (datetime.utcnow() cria objetos 'naive' representando UTC)
     if dt.tzinfo is None:
-        # usa calendar.timegm para evitar interpretações do timezone local
         return int(calendar.timegm(dt.timetuple()) * 1000 + dt.microsecond // 1000)
     else:
         return int(dt.timestamp() * 1000)
@@ -72,8 +70,10 @@ def login():
                 error = "Acesso expirado."
                 return render_template("login.html", error=error)
             session["user_id"] = user.id
-            session["is_admin"] = bool(user.is_admin)
-            return redirect(url_for("admin") if user.is_admin else url_for("dashboard"))
+            # >>> CORREÇÃO: força is_admin como True/False
+            is_admin_flag = True if user.is_admin in (1, True) else False
+            session["is_admin"] = is_admin_flag
+            return redirect(url_for("admin") if is_admin_flag else url_for("dashboard"))
         error = "Credenciais inválidas!"
     return render_template("login.html", error=error)
 
@@ -100,7 +100,6 @@ def api_start_analysis():
     if not user:
         return jsonify({"error": "not_authenticated"}), 401
 
-    # check access expiry
     if user.access_expires_at and user.access_expires_at < datetime.utcnow():
         return jsonify({"error": "expired"}), 403
 
@@ -111,7 +110,6 @@ def api_start_analysis():
     if last_ms and (last_ms + block_ms) > now_ms:
         return jsonify({"error": "blocked", "blocked_until": last_ms + block_ms}), 429
 
-    # allowed: set session start timestamp (server authoritative)
     session["analysis_started_at_ms"] = now_ms
 
     ativos = [
@@ -125,7 +123,6 @@ def api_start_analysis():
     ativo = random.choice(ativos)
     direcao = random.choice(direcoes)
 
-    # USANDO datetime.now com timezone America/Sao_Paulo para pegar horário correto
     now_dt_sp = datetime.now(tz_sp).replace(second=0, microsecond=0)
 
     entrada_dt = (now_dt_sp + timedelta(minutes=3)).strftime("%H:%M")
@@ -212,12 +209,10 @@ def api_admin_users():
                 "access_expires_at": to_ms(u.access_expires_at),
                 "created_at": to_ms(u.created_at),
                 "last_analysis_started_at": session.get("analysis_started_at_ms") if u.id == user.id else None,
-                # >>> ADIÇÃO: status de expiração para o painel
                 "is_expired": (not u.is_access_valid())
             })
         return jsonify({"users": out})
 
-    # POST -> create user
     data = request.get_json() or {}
     email = data.get("email")
     username = data.get("username")
@@ -272,7 +267,6 @@ def api_admin_user_modify(user_id):
     return jsonify({"ok": True})
 
 
-# >>> ADIÇÃO: endpoint específico para RENOVAR rapidamente a data de expiração
 @app.route("/api/admin/users/<int:user_id>/renew", methods=["POST"])
 def api_admin_user_renew(user_id):
     admin = current_user()
@@ -284,12 +278,10 @@ def api_admin_user_renew(user_id):
         return jsonify({"error": "not_found"}), 404
 
     data = request.get_json() or {}
-    # Espera { "access_expires_at": <epoch_ms> } ou null (vitalício)
     if "access_expires_at" not in data:
         return jsonify({"error": "missing_access_expires_at"}), 400
 
     if data["access_expires_at"] is None:
-        # tornar vitalício
         target.access_expires_at = None
     else:
         try:
@@ -303,7 +295,6 @@ def api_admin_user_renew(user_id):
     return jsonify({"ok": True})
 
 
-# Admin clicks list & stats
 @app.route("/api/admin/clicks/list")
 def api_admin_clicks_list():
     user = current_user()
@@ -373,7 +364,6 @@ def api_admin_clicks_stats():
 
     else:
         months = 12
-        # calculate start month (approx)
         start_month = (now.replace(day=1) - timedelta(days=30 * months)).date()
         def month_label(dt):
             return dt.strftime("%Y-%m")
@@ -383,7 +373,6 @@ def api_admin_clicks_stats():
             labels.append(label)
             telegram_counts[label] = 0
             compra_counts[label] = 0
-            # advance month safely
             year = cur.year + (cur.month // 12)
             month = (cur.month % 12) + 1
             try:
