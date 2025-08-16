@@ -18,7 +18,77 @@ load_dotenv()
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
 app.secret_key = os.getenv("SECRET_KEY", "dev-fallback-secret")
-app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL", "sqlite:///zinal.db")
+import os
+import random
+import time
+import calendar
+from datetime import datetime, timedelta
+from flask import (
+    Flask, render_template, request, redirect, url_for,
+    flash, session, jsonify
+)
+from werkzeug.security import generate_password_hash, check_password_hash
+from dotenv import load_dotenv
+import pytz  # <-- ADICIONADO
+
+from models import db, User, ClickLog
+
+# carregar .env
+load_dotenv()
+
+app = Flask(__name__, static_folder="static", template_folder="templates")
+app.secret_key = os.getenv("SECRET_KEY", "dev-fallback-secret")
+
+# ----------- Ajuste para Render PostgreSQL -----------
+db_url = os.getenv("DATABASE_URL", "sqlite:///zinal.db")
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = db_url
+# -----------------------------------------------------
+
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+db.init_app(app)
+with app.app_context():
+    db.create_all()
+
+# timezone America/Sao_Paulo para conversão
+tz_sp = pytz.timezone("America/Sao_Paulo")
+
+# ---------- Helpers ----------
+def current_user():
+    uid = session.get("user_id")
+    if not uid:
+        return None
+    return User.query.get(uid)
+
+def ms_now():
+    return int(time.time() * 1000)
+
+def to_ms(dt):
+    """Converte datetime para epoch ms de forma correta assumindo UTC se for 'naive'."""
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        return int(calendar.timegm(dt.timetuple()) * 1000 + dt.microsecond // 1000)
+    else:
+        return int(dt.timestamp() * 1000)
+
+
+# ---------------- Public pages ----------------
+@app.route("/", methods=["GET"])
+def landing():
+    return render_template("landing.html")
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    error = None
+    if request.method == "POST":
+        identifier = request.form.get("identifier", "").strip()
+        password = reque
+
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)
@@ -379,3 +449,4 @@ def api_admin_clicks_stats():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
