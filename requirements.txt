@@ -4,3 +4,4 @@ python-dotenv
 Flask-SQLAlchemy
 gunicorn
 pytz
+psycopg2-binary
