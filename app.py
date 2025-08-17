@@ -87,7 +87,7 @@ def login():
     error = None
     if request.method == "POST":
         identifier = request.form.get("identifier", "").strip()
-        password = reque
+        password = request.form.get("password", "")
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
@@ -449,4 +449,5 @@ def api_admin_clicks_stats():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
