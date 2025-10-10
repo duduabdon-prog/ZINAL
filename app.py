@@ -20,9 +20,21 @@ app = Flask(__name__, static_folder="static", template_folder="templates")
 app.secret_key = os.getenv("SECRET_KEY", "dev-fallback-secret")
 
 # ----------- Ajuste para Render PostgreSQL -----------
-db_url = os.getenv("DATABASE_URL", "sqlite:///zinal.db")
-if db_url.startswith("postgres://"):
-    db_url = db_url.replace("postgres://", "postgresql://", 1)
+# Se existir DATABASE_URL no ambiente, usa ele com SSL obrigatório
+db_url = os.getenv("DATABASE_URL")
+
+if db_url:
+    if db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
+    # Garante SSL obrigatório (Render exige isso)
+    if "sslmode=" not in db_url:
+        if "?" in db_url:
+            db_url += "&sslmode=require"
+        else:
+            db_url += "?sslmode=require"
+else:
+    # Fallback local com SQLite
+    db_url = "sqlite:///instance/zinal.db"
 
 app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 # -----------------------------------------------------
@@ -385,3 +397,4 @@ def api_admin_clicks_stats():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
